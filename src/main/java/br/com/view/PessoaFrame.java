@@ -32,7 +32,7 @@ public class PessoaFrame extends JFrame {
 
         setTitle("Cadastro de Pessoas");
         setSize(800, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Fecha apenas esta janela
         setLocationRelativeTo(null);
 
         // Tabela
