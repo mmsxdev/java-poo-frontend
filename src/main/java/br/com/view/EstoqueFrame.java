@@ -1,7 +1,8 @@
 package br.com.view;
 
-import br.com.model.Estoque;
-import br.com.service.EstoqueApiServiceMock;
+import br.com.enums.TipoEstoque;
+import br.com.model.EstoqueDTO;
+import br.com.service.EstoqueApiClient;
 import br.com.service.IEstoqueService;
 
 import javax.swing.*;
@@ -20,6 +21,7 @@ public class EstoqueFrame extends JFrame {
     private final JTable table;
     private final JTextField idField = new JTextField(5);
     private final JTextField quantidadeField = new JTextField(10);
+    private final JComboBox<TipoEstoque> tipoEstoqueComboBox = new JComboBox<>(TipoEstoque.values());
     private final JTextField localTanqueField = new JTextField(20);
     private final JTextField localEnderecoField = new JTextField(20);
     private final JTextField loteFabricacaoField = new JTextField(15);
@@ -27,7 +29,8 @@ public class EstoqueFrame extends JFrame {
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE; // yyyy-MM-dd
 
     public EstoqueFrame() {
-        this.estoqueService = new EstoqueApiServiceMock();
+        // 1. Substituindo o Mock pelo cliente da API real
+        this.estoqueService = new EstoqueApiClient();
 
         setTitle("Cadastro de Estoque");
         setSize(800, 600);
@@ -35,7 +38,7 @@ public class EstoqueFrame extends JFrame {
         setLocationRelativeTo(null);
 
         // Tabela
-        String[] columnNames = {"ID", "Quantidade", "Local/Tanque", "Endereço", "Lote", "Data Validade"};
+        String[] columnNames = {"ID", "Tipo", "Quantidade", "Local/Tanque", "Endereço", "Lote", "Data Validade"};
         tableModel = new DefaultTableModel(columnNames, 0);
         table = new JTable(tableModel);
         add(new JScrollPane(table), BorderLayout.CENTER);
@@ -47,6 +50,8 @@ public class EstoqueFrame extends JFrame {
         formPanel.add(idField);
         formPanel.add(new JLabel("Quantidade:"));
         formPanel.add(quantidadeField);
+        formPanel.add(new JLabel("Tipo de Estoque:"));
+        formPanel.add(tipoEstoqueComboBox);
         formPanel.add(new JLabel("Local/Tanque:"));
         formPanel.add(localTanqueField);
         formPanel.add(new JLabel("Endereço:"));
@@ -95,11 +100,12 @@ public class EstoqueFrame extends JFrame {
         if (selectedRow == -1) return;
 
         idField.setText(tableModel.getValueAt(selectedRow, 0).toString());
-        quantidadeField.setText(tableModel.getValueAt(selectedRow, 1).toString());
-        localTanqueField.setText(tableModel.getValueAt(selectedRow, 2).toString());
-        localEnderecoField.setText(tableModel.getValueAt(selectedRow, 3).toString());
-        loteFabricacaoField.setText(tableModel.getValueAt(selectedRow, 4).toString());
-        dataValidadeField.setText(tableModel.getValueAt(selectedRow, 5).toString());
+        tipoEstoqueComboBox.setSelectedItem(tableModel.getValueAt(selectedRow, 1));
+        quantidadeField.setText(tableModel.getValueAt(selectedRow, 2).toString());
+        localTanqueField.setText(tableModel.getValueAt(selectedRow, 3).toString());
+        localEnderecoField.setText(tableModel.getValueAt(selectedRow, 4).toString());
+        loteFabricacaoField.setText(tableModel.getValueAt(selectedRow, 5).toString());
+        dataValidadeField.setText(tableModel.getValueAt(selectedRow, 6).toString());
     }
 
     private void limparFormulario() {
@@ -109,21 +115,24 @@ public class EstoqueFrame extends JFrame {
         localEnderecoField.setText("");
         loteFabricacaoField.setText("");
         dataValidadeField.setText("");
+        tipoEstoqueComboBox.setSelectedIndex(0);
         table.clearSelection();
     }
 
     private void atualizarTabela() {
         try {
-            List<Estoque> estoques = estoqueService.listarEstoques();
+            // 2. O serviço agora retorna uma lista de EstoqueDTO
+            List<EstoqueDTO> estoques = estoqueService.listarTodos();
             tableModel.setRowCount(0); // Limpa a tabela
-            for (Estoque e : estoques) {
+            for (EstoqueDTO dto : estoques) {
                 tableModel.addRow(new Object[]{
-                        e.getId(),
-                        e.getQuantidade(),
-                        e.getLocalTanque(),
-                        e.getLocalEndereco(),
-                        e.getLoteFabricacao(),
-                        e.getDataValidade().format(dateFormatter)
+                        dto.getId(),
+                        dto.getTipoEstoque(), // Adicionado tipo
+                        dto.getQuantidade(),
+                        dto.getLocalTanque(),
+                        dto.getLocalEndereco(),
+                        dto.getLoteFabricacao(),
+                        dto.getDataValidade() != null ? dto.getDataValidade().format(dateFormatter) : ""
                 });
             }
         } catch (Exception e) {
@@ -133,22 +142,32 @@ public class EstoqueFrame extends JFrame {
 
     private void salvarEstoque() {
         try {
+            // Validações básicas
+            if (quantidadeField.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "O campo 'Quantidade' é obrigatório.", "Erro de Validação", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 3. Coletando dados do formulário para criar o DTO
             BigDecimal quantidade = new BigDecimal(quantidadeField.getText());
+            TipoEstoque tipoEstoque = (TipoEstoque) tipoEstoqueComboBox.getSelectedItem();
             String localTanque = localTanqueField.getText();
             String localEndereco = localEnderecoField.getText();
             String lote = loteFabricacaoField.getText();
-            LocalDate dataValidade = LocalDate.parse(dataValidadeField.getText(), dateFormatter);
+            String dataValidadeTexto = dataValidadeField.getText().trim();
+            LocalDate dataValidade = dataValidadeTexto.isEmpty() ? null : LocalDate.parse(dataValidadeTexto, dateFormatter);
 
-            Estoque estoque = new Estoque(null, quantidade, localTanque, localEndereco, lote, dataValidade);
+            // 4. Criando o objeto DTO para ser enviado para a API
+            EstoqueDTO estoqueDTO = new EstoqueDTO(null, tipoEstoque, quantidade, localTanque, localEndereco, lote, dataValidade);
 
             String idText = idField.getText();
             if (idText.isEmpty()) { // Criar novo
-                estoqueService.criarEstoque(estoque);
+                estoqueService.salvar(estoqueDTO);
                 JOptionPane.showMessageDialog(this, "Estoque criado com sucesso!");
             } else { // Atualizar existente
                 Long id = Long.parseLong(idText);
-                estoque.setId(id);
-                estoqueService.atualizarEstoque(id, estoque);
+                estoqueDTO.setId(id);
+                estoqueService.atualizar(id, estoqueDTO);
                 JOptionPane.showMessageDialog(this, "Estoque atualizado com sucesso!");
             }
 
@@ -178,7 +197,7 @@ public class EstoqueFrame extends JFrame {
 
         try {
             Long id = Long.parseLong(idText);
-            estoqueService.deletarEstoque(id);
+            estoqueService.excluir(id);
             JOptionPane.showMessageDialog(this, "Item do estoque deletado com sucesso!");
             limparFormulario();
             atualizarTabela();

@@ -1,25 +1,30 @@
 package br.com.model;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
+import br.com.enums.TipoEstoque;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Estoque {
+/**
+ * Data Transfer Object (DTO) para a entidade Estoque.
+ * Esta classe é usada para transferir dados de estoque entre a API e a aplicação Swing.
+ */
+public class EstoqueDTO {
 
     private Long id;
+    private TipoEstoque tipoEstoque;
     private BigDecimal quantidade;
     private String localTanque;
     private String localEndereco;
     private String loteFabricacao;
     private LocalDate dataValidade;
 
-    public Estoque() {
+    // Construtor vazio é importante para bibliotecas de serialização/deserialização
+    public EstoqueDTO() {
     }
 
-    public Estoque(Long id, BigDecimal quantidade, String localTanque, String localEndereco, String loteFabricacao, LocalDate dataValidade) {
+    // Construtor completo para facilitar a criação de objetos
+    public EstoqueDTO(Long id, TipoEstoque tipoEstoque, BigDecimal quantidade, String localTanque, String localEndereco, String loteFabricacao, LocalDate dataValidade) {
         this.id = id;
+        this.tipoEstoque = tipoEstoque;
         this.quantidade = quantidade;
         this.localTanque = localTanque;
         this.localEndereco = localEndereco;
@@ -35,6 +40,14 @@ public class Estoque {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public TipoEstoque getTipoEstoque() {
+        return tipoEstoque;
+    }
+
+    public void setTipoEstoque(TipoEstoque tipoEstoque) {
+        this.tipoEstoque = tipoEstoque;
     }
 
     public BigDecimal getQuantidade() {
@@ -75,10 +88,5 @@ public class Estoque {
 
     public void setDataValidade(LocalDate dataValidade) {
         this.dataValidade = dataValidade;
-    }
-
-    @Override
-    public String toString() {
-        return "Lote: " + loteFabricacao + " (" + quantidade + " L)";
     }
 }

@@ -1,15 +1,15 @@
 package br.com.service;
 
-import br.com.model.Produto;
+import br.com.model.ProdutoDTO;
 
 import java.util.List;
 
 public interface IProdutoService {
-    List<Produto> listarProdutos() throws Exception;
+    List<ProdutoDTO> listarTodos() throws Exception;
 
-    Produto criarProduto(Produto produto) throws Exception;
+    ProdutoDTO salvar(ProdutoDTO produtoDTO) throws Exception;
 
-    Produto atualizarProduto(Long id, Produto produto) throws Exception;
+    ProdutoDTO atualizar(Long id, ProdutoDTO produtoDTO) throws Exception;
 
-    void deletarProduto(Long id) throws Exception;
+    void excluir(Long id) throws Exception;
 }

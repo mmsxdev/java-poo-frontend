@@ -1,4 +1,5 @@
-package br.com.model;
+package br.com.enums;
+
 
 public enum TipoPessoa {
 
@@ -7,11 +8,12 @@ public enum TipoPessoa {
 
     private final String descricao;
 
-    TipoPessoa(String descricao) {
+    private TipoPessoa(String descricao) {
         this.descricao = descricao;
     }
 
     public String getDescricao() {
         return descricao;
     }
+
 }

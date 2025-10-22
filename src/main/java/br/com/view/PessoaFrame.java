@@ -1,13 +1,13 @@
 package br.com.view;
 
-import br.com.model.Pessoa;
-import br.com.model.TipoPessoa;
-import br.com.service.*;
+import br.com.model.PessoaDTO;
+import br.com.enums.TipoPessoa;
+import br.com.service.IPessoaService;
+import br.com.service.PessoaApiClient;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -15,7 +15,7 @@ import java.util.List;
 
 public class PessoaFrame extends JFrame {
 
-    private final IPessoaService pessoaApiService;
+    private final IPessoaService pessoaService;
     private final DefaultTableModel tableModel;
     private final JTable table;
     private final JTextField idField = new JTextField(5);
@@ -26,9 +26,8 @@ public class PessoaFrame extends JFrame {
     private final JComboBox<TipoPessoa> tipoPessoaComboBox = new JComboBox<>(TipoPessoa.values());
 
     public PessoaFrame() {
-        // Para usar a API real: new PessoaApiService();
-        // Para usar os dados MOCKADOS (simulados): new PessoaApiServiceMock();
-        this.pessoaApiService = new PessoaApiServiceMock();
+        // Conectando ao cliente da API real
+        this.pessoaService = new PessoaApiClient();
 
         setTitle("Cadastro de Pessoas");
         setSize(800, 600);
@@ -95,12 +94,20 @@ public class PessoaFrame extends JFrame {
         int selectedRow = table.getSelectedRow();
         if (selectedRow == -1) return;
 
-        idField.setText(tableModel.getValueAt(selectedRow, 0).toString());
-        nomeField.setText(tableModel.getValueAt(selectedRow, 1).toString());
-        cpfCnpjField.setText(tableModel.getValueAt(selectedRow, 2).toString());
-        ctpsField.setText(tableModel.getValueAt(selectedRow, 3) != null ? tableModel.getValueAt(selectedRow, 3).toString() : "");
-        dataNascimentoField.setText(tableModel.getValueAt(selectedRow, 4).toString());
-        tipoPessoaComboBox.setSelectedItem(TipoPessoa.valueOf(tableModel.getValueAt(selectedRow, 5).toString()));
+        // Função auxiliar para obter valor da tabela de forma segura
+        Object idValue = tableModel.getValueAt(selectedRow, 0);
+        Object nomeValue = tableModel.getValueAt(selectedRow, 1);
+        Object cpfCnpjValue = tableModel.getValueAt(selectedRow, 2);
+        Object ctpsValue = tableModel.getValueAt(selectedRow, 3);
+        Object dataNascValue = tableModel.getValueAt(selectedRow, 4);
+        Object tipoPessoaValue = tableModel.getValueAt(selectedRow, 5);
+
+        idField.setText(idValue != null ? idValue.toString() : "");
+        nomeField.setText(nomeValue != null ? nomeValue.toString() : "");
+        cpfCnpjField.setText(cpfCnpjValue != null ? cpfCnpjValue.toString() : "");
+        ctpsField.setText(ctpsValue != null ? ctpsValue.toString() : "");
+        dataNascimentoField.setText(dataNascValue != null ? dataNascValue.toString() : "");
+        tipoPessoaComboBox.setSelectedItem(tipoPessoaValue);
     }
 
     private void limparFormulario() {
@@ -115,15 +122,15 @@ public class PessoaFrame extends JFrame {
 
     private void atualizarTabela() {
         try {
-            List<Pessoa> pessoas = pessoaApiService.listarPessoas();
+            List<PessoaDTO> pessoas = pessoaService.listarTodos();
             tableModel.setRowCount(0); // Limpa a tabela
-            for (Pessoa p : pessoas) {
+            for (PessoaDTO p : pessoas) {
                 tableModel.addRow(new Object[]{
                         p.getId(),
                         p.getNomeCompleto(),
                         p.getCpfCnpj(),
                         p.getNumeroCtps(),
-                        p.getDataNascimento(),
+                        p.getDataNascimento().format(DateTimeFormatter.ISO_LOCAL_DATE),
                         p.getTipoPessoa()
                 });
             }
@@ -147,16 +154,16 @@ public class PessoaFrame extends JFrame {
 
             TipoPessoa tipoPessoa = (TipoPessoa) tipoPessoaComboBox.getSelectedItem();
 
-            Pessoa pessoa = new Pessoa(null, nome, cpfCnpj, ctps, dataNascimento, tipoPessoa);
+            PessoaDTO pessoaDTO = new PessoaDTO(null, nome, cpfCnpj, ctps, dataNascimento, tipoPessoa);
 
             String idText = idField.getText();
             if (idText.isEmpty()) { // Criar nova pessoa
-                pessoaApiService.criarPessoa(pessoa);
+                pessoaService.salvar(pessoaDTO);
                 JOptionPane.showMessageDialog(this, "Pessoa criada com sucesso!");
             } else { // Atualizar pessoa existente
                 Long id = Long.parseLong(idText);
-                pessoa.setId(id);
-                pessoaApiService.atualizarPessoa(id, pessoa);
+                pessoaDTO.setId(id);
+                pessoaService.atualizar(id, pessoaDTO);
                 JOptionPane.showMessageDialog(this, "Pessoa atualizada com sucesso!");
             }
 
@@ -184,7 +191,7 @@ public class PessoaFrame extends JFrame {
 
         try {
             Long id = Long.parseLong(idText);
-            pessoaApiService.deletarPessoa(id);
+            pessoaService.excluir(id);
             JOptionPane.showMessageDialog(this, "Pessoa deletada com sucesso!");
             limparFormulario();
             atualizarTabela();

@@ -1,27 +1,34 @@
 package br.com.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import br.com.enums.TipoProduto;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Produto {
+/**
+ * Data Transfer Object (DTO) para a entidade Produto.
+ */
+public class ProdutoDTO {
 
     private Long id;
     private String nome;
     private String referencia;
     private String fornecedor;
     private String marca;
-    private String categoria;
 
-    public Produto() {
+    // Diz ao Jackson para mapear o campo "categoria" do JSON para este campo "tipoProduto"
+    @JsonProperty("categoria")
+    private TipoProduto tipoProduto;
+
+    // Construtor vazio para o Jackson
+    public ProdutoDTO() {
     }
 
-    public Produto(Long id, String nome, String referencia, String fornecedor, String marca, String categoria) {
+    public ProdutoDTO(Long id, String nome, String referencia, String fornecedor, String marca, TipoProduto tipoProduto) {
         this.id = id;
         this.nome = nome;
         this.referencia = referencia;
         this.fornecedor = fornecedor;
         this.marca = marca;
-        this.categoria = categoria;
+        this.tipoProduto = tipoProduto;
     }
 
     // Getters e Setters
@@ -66,16 +73,11 @@ public class Produto {
         this.marca = marca;
     }
 
-    public String getCategoria() {
-        return categoria;
+    public TipoProduto getTipoProduto() {
+        return tipoProduto;
     }
 
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
-    }
-
-    @Override
-    public String toString() {
-        return nome;
+    public void setTipoProduto(TipoProduto tipoProduto) {
+        this.tipoProduto = tipoProduto;
     }
 }

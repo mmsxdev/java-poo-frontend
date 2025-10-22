@@ -1,8 +1,9 @@
 package br.com.view;
 
-import br.com.model.Produto;
+import br.com.enums.TipoProduto;
+import br.com.model.ProdutoDTO;
 import br.com.service.IProdutoService;
-import br.com.service.ProdutoApiServiceMock;
+import br.com.service.ProdutoApiClient;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -19,10 +20,10 @@ public class ProdutoFrame extends JFrame {
     private final JTextField referenciaField = new JTextField(20);
     private final JTextField fornecedorField = new JTextField(15);
     private final JTextField marcaField = new JTextField(15);
-    private final JTextField categoriaField = new JTextField(15);
+    private final JComboBox<TipoProduto> categoriaComboBox = new JComboBox<>(TipoProduto.values());
 
     public ProdutoFrame() {
-        this.produtoService = new ProdutoApiServiceMock();
+        this.produtoService = new ProdutoApiClient();
 
         setTitle("Cadastro de Produtos");
         setSize(800, 600);
@@ -49,7 +50,7 @@ public class ProdutoFrame extends JFrame {
         formPanel.add(new JLabel("Marca:"));
         formPanel.add(marcaField);
         formPanel.add(new JLabel("Categoria:"));
-        formPanel.add(categoriaField);
+        formPanel.add(categoriaComboBox);
 
         // Painel de botões
         JPanel buttonPanel = new JPanel();
@@ -94,7 +95,7 @@ public class ProdutoFrame extends JFrame {
         referenciaField.setText(tableModel.getValueAt(selectedRow, 2).toString());
         fornecedorField.setText(tableModel.getValueAt(selectedRow, 3).toString());
         marcaField.setText(tableModel.getValueAt(selectedRow, 4).toString());
-        categoriaField.setText(tableModel.getValueAt(selectedRow, 5).toString());
+        categoriaComboBox.setSelectedItem(tableModel.getValueAt(selectedRow, 5));
     }
 
     private void limparFormulario() {
@@ -103,22 +104,22 @@ public class ProdutoFrame extends JFrame {
         referenciaField.setText("");
         fornecedorField.setText("");
         marcaField.setText("");
-        categoriaField.setText("");
+        categoriaComboBox.setSelectedIndex(0);
         table.clearSelection();
     }
 
     private void atualizarTabela() {
         try {
-            List<Produto> produtos = produtoService.listarProdutos();
+            List<ProdutoDTO> produtos = produtoService.listarTodos();
             tableModel.setRowCount(0); // Limpa a tabela
-            for (Produto p : produtos) {
+            for (ProdutoDTO p : produtos) {
                 tableModel.addRow(new Object[]{
                         p.getId(),
                         p.getNome(),
                         p.getReferencia(),
                         p.getFornecedor(),
                         p.getMarca(),
-                        p.getCategoria()
+                        p.getTipoProduto()
                 });
             }
         } catch (Exception e) {
@@ -128,22 +129,27 @@ public class ProdutoFrame extends JFrame {
 
     private void salvarProduto() {
         try {
+            if (nomeField.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "O campo 'Nome' é obrigatório.", "Erro de Validação", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             String nome = nomeField.getText();
             String referencia = referenciaField.getText();
             String fornecedor = fornecedorField.getText();
             String marca = marcaField.getText();
-            String categoria = categoriaField.getText();
+            TipoProduto tipoProduto = (TipoProduto) categoriaComboBox.getSelectedItem();
 
-            Produto produto = new Produto(null, nome, referencia, fornecedor, marca, categoria);
+            ProdutoDTO produtoDTO = new ProdutoDTO(null, nome, referencia, fornecedor, marca, tipoProduto);
 
             String idText = idField.getText();
             if (idText.isEmpty()) { // Criar novo
-                produtoService.criarProduto(produto);
+                produtoService.salvar(produtoDTO);
                 JOptionPane.showMessageDialog(this, "Produto criado com sucesso!");
             } else { // Atualizar existente
                 Long id = Long.parseLong(idText);
-                produto.setId(id);
-                produtoService.atualizarProduto(id, produto);
+                produtoDTO.setId(id);
+                produtoService.atualizar(id, produtoDTO);
                 JOptionPane.showMessageDialog(this, "Produto atualizado com sucesso!");
             }
 
@@ -169,7 +175,7 @@ public class ProdutoFrame extends JFrame {
 
         try {
             Long id = Long.parseLong(idText);
-            produtoService.deletarProduto(id);
+            produtoService.excluir(id);
             JOptionPane.showMessageDialog(this, "Produto deletado com sucesso!");
             limparFormulario();
             atualizarTabela();

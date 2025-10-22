@@ -1,23 +1,37 @@
 package br.com.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import br.com.enums.TipoPessoa;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDate;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class Pessoa {
+/**
+ * Data Transfer Object (DTO) para a entidade Pessoa.
+ */
+public class PessoaDTO {
 
     private Long id;
+
+    @JsonProperty("nomeCompleto") // Mapeia o campo "nome_completo" do JSON
     private String nomeCompleto;
+
+    @JsonProperty("cpfCnpj")
     private String cpfCnpj;
+
+    @JsonProperty("numeroCtps")
     private Long numeroCtps;
+
+    @JsonProperty("dataNascimento")
     private LocalDate dataNascimento;
+
+    @JsonProperty("tipoPessoa")
     private TipoPessoa tipoPessoa;
 
-    public Pessoa() {
+    // Construtor vazio para o Jackson
+    public PessoaDTO() {
     }
 
-    public Pessoa(Long id, String nomeCompleto, String cpfCnpj, Long numeroCtps, LocalDate dataNascimento, TipoPessoa tipoPessoa) {
+    public PessoaDTO(Long id, String nomeCompleto, String cpfCnpj, Long numeroCtps, LocalDate dataNascimento, TipoPessoa tipoPessoa) {
         this.id = id;
         this.nomeCompleto = nomeCompleto;
         this.cpfCnpj = cpfCnpj;
@@ -74,10 +88,5 @@ public class Pessoa {
 
     public void setTipoPessoa(TipoPessoa tipoPessoa) {
         this.tipoPessoa = tipoPessoa;
-    }
-
-    @Override
-    public String toString() {
-        return nomeCompleto; // Usado para exibição em JComboBox ou JList
     }
 }

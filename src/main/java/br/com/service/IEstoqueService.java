@@ -1,15 +1,17 @@
 package br.com.service;
 
-import br.com.model.Estoque;
+import br.com.model.EstoqueDTO;
 
 import java.util.List;
 
 public interface IEstoqueService {
-    List<Estoque> listarEstoques() throws Exception;
+    List<EstoqueDTO> listarTodos() throws Exception;
 
-    Estoque criarEstoque(Estoque estoque) throws Exception;
+    EstoqueDTO buscarPorId(Long id) throws Exception;
 
-    Estoque atualizarEstoque(Long id, Estoque estoque) throws Exception;
+    EstoqueDTO salvar(EstoqueDTO estoqueDTO) throws Exception;
 
-    void deletarEstoque(Long id) throws Exception;
+    EstoqueDTO atualizar(Long id, EstoqueDTO estoqueDTO) throws Exception;
+
+    void excluir(Long id) throws Exception;
 }
